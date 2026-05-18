@@ -2,3 +2,4 @@ main
 *.o
 *.out
 .vscode/
+qr_code.txt

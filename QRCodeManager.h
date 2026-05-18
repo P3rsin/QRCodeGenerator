@@ -16,10 +16,12 @@ class QRCodeManager {
         string binaryVectorToStr();
         string constructQRCode();
         string destructQRCode();
+        void downloadQRCode();
         vector<string> getBinaryVector();
         string getInputStr();
         void setInputStr(string inputStr);
         string getQRCode();
+        void run();
 
     private:
         string inputStr;
