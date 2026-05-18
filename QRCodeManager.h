@@ -3,27 +3,28 @@
 
 #include <string>
 #include <vector>
-#include <cmath>
 
 using namespace std;
 
 class QRCodeManager {
     public:
         QRCodeManager();
-        QRCodeManager(string inputStr);
-        //~QRCodeManager();
         string reverseStr(string strToReverse);
         string charToBinary(char character);
         char binaryToChar(string binary);
         vector<string> populateBinaryVector();
         string binaryVectorToStr();
-        void constructQRCode();
+        string constructQRCode();
+        string destructQRCode();
         vector<string> getBinaryVector();
         string getInputStr();
+        void setInputStr(string inputStr);
+        string getQRCode();
 
     private:
         string inputStr;
         vector<string> binaryVector;
+        string QRCode;
 };
 
 #endif

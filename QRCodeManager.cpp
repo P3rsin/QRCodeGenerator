@@ -1,16 +1,13 @@
 #include "QRCodeManager.h"
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
 QRCodeManager::QRCodeManager() {
-    inputStr = "input";
+    inputStr = "";
     binaryVector = populateBinaryVector();
-}
-
-QRCodeManager::QRCodeManager(string inputStr) {
-    this->inputStr = inputStr;
-    binaryVector = populateBinaryVector();
+    QRCode = "";
 }
 
 string QRCodeManager::reverseStr(string strToReverse) {
@@ -76,7 +73,7 @@ string QRCodeManager::binaryVectorToStr() {
     return binaryStr;
 }
 
-void QRCodeManager::constructQRCode() {
+string QRCodeManager::constructQRCode() {
     string binaryStr = binaryVectorToStr();
     int binaryVectorSize = static_cast<int>(binaryVector.size());
     int totalNumChars = binaryVectorSize * 8;
@@ -86,23 +83,35 @@ void QRCodeManager::constructQRCode() {
         gridDimensions++;
     }
 
-    cout << "size: " << totalNumChars << " gd: " << gridDimensions << endl;
+    //cout << "size: " << totalNumChars << " gd: " << gridDimensions << endl;
 
-    cout << binaryStr << endl;
+    //cout << binaryStr << endl;
 
+    QRCode = "";
     size_t idx = 0;
     for (int i = 0; i < gridDimensions; i++) {
         for (int j = 0; j < gridDimensions; j++) {
             if (idx < totalNumChars) {
-                cout << binaryStr[idx] << " ";
+                //cout << binaryStr[idx] << " ";
+                QRCode += binaryStr[idx];
+                QRCode += " ";
             } else {
-                cout << "m ";
+                // cout << "m ";
+                QRCode += "m ";
             }
 
             idx++;
         }
-        cout << endl;
+        // cout << endl;
+        QRCode += "\n";
     }
+
+    return QRCode;
+}
+
+string QRCodeManager::destructQRCode() {
+    // to be implemented
+    // converts a qr code back to a string
 }
 
 vector<string> QRCodeManager::getBinaryVector() {
@@ -111,4 +120,14 @@ vector<string> QRCodeManager::getBinaryVector() {
 
 string QRCodeManager::getInputStr() {
     return inputStr;
+}
+
+void QRCodeManager::setInputStr(string inputStr) {
+    this->inputStr = inputStr;
+    binaryVector = populateBinaryVector();
+    QRCode = constructQRCode();
+}
+
+string QRCodeManager::getQRCode() {
+    return QRCode;
 }
