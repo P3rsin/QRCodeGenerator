@@ -28,9 +28,7 @@ string QRCodeManager::charToBinary(char character) {
     string binary = "";
 
     while (asciiValue != 0) {
-        int x = 0;
-
-        x = asciiValue % 2;
+        int x = asciiValue % 2;
         asciiValue /= 2;
         binary += to_string(x);
     }
@@ -84,9 +82,7 @@ string QRCodeManager::intToFixedBinary(int num, int bits) {
     string binary = "";
 
     while (num != 0) {
-        int x = 0;
-
-        x = num % 2;
+        int x = num % 2;
         num /= 2;
         binary += to_string(x);
     }
@@ -199,9 +195,7 @@ string QRCodeManager::decodeQRCode(string qrCode) {
     }
 
     string header = binaryStr.substr(0, 64);
-    string signatureBinary = header.substr(0, 32);
     int inputSize = binaryToInt(header.substr(32, 16));
-    int checksum = binaryToInt(header.substr(48, 16));
 
     string decodedMessage = "";
 
@@ -242,22 +236,10 @@ void QRCodeManager::downloadQRCode() {
     }
 }
 
-vector<string> QRCodeManager::getBinaryVector() {
-    return binaryVector;
-}
-
-string QRCodeManager::getInputStr() {
-    return inputStr;
-}
-
 void QRCodeManager::setInputStr(string inputStr) {
     this->inputStr = inputStr;
     binaryVector = populateBinaryVector();
     QRCode = constructQRCode();
-}
-
-string QRCodeManager::getQRCode() {
-    return QRCode;
 }
 
 void QRCodeManager::run() {
@@ -344,18 +326,23 @@ void QRCodeManager::run() {
         } else if (usrInput == "5") {
             string projectInfo =
                 "Project Info:\n"
-                "This is a simple QR Code Generator that takes in a user's string input\n"
-                "and converts it into binary, which is then turned into a visual QR Code\n"
-                "where a white cell represents a 1 and a shaded cell represents a 0.\n"
+                "This is a simple terminal-based QR Code Generator. The program takes a\n"
+                "user's string input, converts each character into binary, and displays\n"
+                "that binary data as a visual QR-style grid using shaded and filled blocks.\n"
                 "\n"
-                "The visual aspect of the QR Code does not only contain the data from the\n"
-                "user's input. It also has a header that contains the project signature,\n"
-                "a binary version of HAQR, which stands for Haroon Awan's QR Code\n"
-                "Generator. The header also contains the size of the user's input string,\n"
-                "the checksum, and the size of the header itself, allowing the QR Code to\n"
-                "remain flexible and be decoded back into plaintext. Having the header\n"
-                "allows the QR Code to always maintain a standard form without losing any\n"
-                "functionality.";
+                "The QR code also includes a small header before the message data. This\n"
+                "header stores the HAQR project signature, the length of the original\n"
+                "message, and a checksum. The signature helps identify the code as one\n"
+                "made by my program, while the message length tells the decoder how many\n"
+                "characters to read.\n"
+                "\n"
+                "The checksum is used to check whether the QR code was encoded and decoded\n"
+                "correctly. The program calculates a checksum from the original input, then\n"
+                "calculates another checksum from the decoded QR output. If both values\n"
+                "match, the program reports that the QR code is valid.\n"
+                "\n"
+                "Users can generate a QR code, view the current QR code, download it to a\n"
+                "text file, or paste a QR code back into the program to decode it.";
 
             cout << projectInfo << endl;
         } else {

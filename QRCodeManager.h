@@ -25,11 +25,7 @@ public:
 
     int checksumMaker(string inputStr);
 
-    vector<string> getBinaryVector();
-    string getInputStr();
     void setInputStr(string inputStr);
-    string getQRCode();
-    int getChecksum();
 
     void run();
 
