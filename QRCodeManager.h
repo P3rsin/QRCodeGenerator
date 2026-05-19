@@ -11,11 +11,13 @@ class QRCodeManager {
         QRCodeManager();
         string reverseStr(string strToReverse);
         string charToBinary(char character);
+        string stringToBinary(string str);
         char binaryToChar(string binary);
+        string intToBinary(int num);
         vector<string> populateBinaryVector();
         string binaryVectorToStr();
         string constructQRCode();
-        string destructQRCode();
+        string decodeQRCode();
         void downloadQRCode();
         vector<string> getBinaryVector();
         string getInputStr();
@@ -27,6 +29,7 @@ class QRCodeManager {
         string inputStr;
         vector<string> binaryVector;
         string QRCode;
+        const string QRCodeSignature = stringToBinary("HAQR");
 };
 
 #endif

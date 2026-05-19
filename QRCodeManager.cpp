@@ -32,11 +32,20 @@ string QRCodeManager::charToBinary(char character) {
         binary += to_string(x);
     }
 
-    while (binary.size() != 8) {
+    while (binary.size() < 8) {
         binary += "0";
     }
 
     return reverseStr(binary);
+}
+
+string QRCodeManager::stringToBinary(string str) {
+    string binaryStr = "";
+    for (int i = 0; i < str.size(); i++) {
+        binaryStr += charToBinary(str[i]);
+    }
+
+    return binaryStr;
 }
 
 char QRCodeManager::binaryToChar(string binary) {
@@ -51,6 +60,19 @@ char QRCodeManager::binaryToChar(string binary) {
     }
 
     return char(asciiValue);
+}
+
+string QRCodeManager::intToBinary(int num) {
+    string binary = "";
+    while (num != 0) {
+        int x = 0;
+
+        x = num % 2;
+        num /= 2;
+        binary += to_string(x);
+    }
+
+    return reverseStr(binary);
 }
 
 vector<string> QRCodeManager::populateBinaryVector() {
@@ -75,31 +97,67 @@ string QRCodeManager::binaryVectorToStr() {
 }
 
 string QRCodeManager::constructQRCode() {
-    string binaryStr = binaryVectorToStr();
-    int binaryVectorSize = static_cast<int>(binaryVector.size());
-    int totalNumChars = binaryVectorSize * 8;
-    int gridDimensions = 1;
 
-    while (pow(gridDimensions, 2) < totalNumChars) {
-        gridDimensions++;
+    // ---------------------- header for qr code ----------------------
+
+    string header = "";
+
+    int inputStrSize = inputStr.size(); 
+    string inputStrSizeBinary = intToBinary(inputStrSize);
+
+    header += QRCodeSignature + inputStrSizeBinary; // + checksum (later)
+    int headerSize = header.size();
+    string headerSizeBinary = intToBinary(headerSize);
+
+    if (headerSizeBinary.size() < 16) { // 16 bits for header size
+        while (headerSizeBinary.size() < 16) {
+            headerSizeBinary = "0" + headerSizeBinary;
+        }
     }
 
-    //cout << "size: " << totalNumChars << " gd: " << gridDimensions << endl;
+    header = headerSizeBinary + header; // add header size to the beginning of the header
 
-    //cout << binaryStr << endl;
+    // ----------------------------------------------------------------
+
+    string binaryStr = header + binaryVectorToStr();
+    int totalNumBits = static_cast<int>(binaryStr.size());
+    int gridDimensions = 1;
+
+    while (pow(gridDimensions, 2) < totalNumBits) {
+        gridDimensions++;
+    }
+    gridDimensions += 2;
+
+    cout << binaryStr << endl;
 
     QRCode = "";
     size_t idx = 0;
     for (int i = 0; i < gridDimensions; i++) {
         for (int j = 0; j < gridDimensions; j++) {
-            if (idx < totalNumChars) {
-                QRCode += binaryStr[idx];
-                QRCode += " ";
+            if (i == 0 && j == 0) {
+                QRCode += "╔";
+            } else if (i == 0 && j == gridDimensions - 1) {
+                QRCode += "╗";
+            } else if (i == gridDimensions - 1 && j == 0) {
+                QRCode += "╚";
+            } else if (i == gridDimensions - 1 && j == gridDimensions - 1) {
+                QRCode += "╝";
+            } else if (i == 0 || i == gridDimensions - 1) {
+                QRCode += "══";
+            } else if (j == 0 || j == gridDimensions - 1) {
+                QRCode += "║";
             } else {
-                QRCode += "m ";
+                if (idx < totalNumBits) {
+                    if (binaryStr[idx] == '1') {
+                        QRCode += "██";
+                    } else {
+                        QRCode += "▒▒";
+                    }
+                } else {
+                    QRCode += "██";
+                }
+                idx++;
             }
-
-            idx++;
         }
         QRCode += "\n";
     }
@@ -107,7 +165,7 @@ string QRCodeManager::constructQRCode() {
     return QRCode;
 }
 
-string QRCodeManager::destructQRCode() {
+string QRCodeManager::decodeQRCode() {
     // to be implemented
     // converts a qr code back to a string
 }
