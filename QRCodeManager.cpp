@@ -48,6 +48,20 @@ string QRCodeManager::stringToBinary(string str) {
     return binaryStr;
 }
 
+int QRCodeManager::binaryToInt(string binary) {
+    int value = 0;
+    int binarySize = binary.size();
+    string reversedBinary = reverseStr(binary);
+    
+    for (int i = 0; i < binarySize; i++) {
+        if (reversedBinary[i] == '1') {
+            value += pow(2, i);
+        }
+    }
+
+    return value;
+}
+
 char QRCodeManager::binaryToChar(string binary) {
     int asciiValue = 0;
     size_t binarySize = binary.size();
@@ -62,7 +76,7 @@ char QRCodeManager::binaryToChar(string binary) {
     return char(asciiValue);
 }
 
-string QRCodeManager::intToBinary(int num) {
+string QRCodeManager::intToFixedBinary(int num, int bits) {
     string binary = "";
     while (num != 0) {
         int x = 0;
@@ -70,6 +84,10 @@ string QRCodeManager::intToBinary(int num) {
         x = num % 2;
         num /= 2;
         binary += to_string(x);
+    }
+
+    while (binary.size() < bits) {
+        binary += "0";
     }
 
     return reverseStr(binary);
@@ -103,19 +121,13 @@ string QRCodeManager::constructQRCode() {
     string header = "";
 
     int inputStrSize = inputStr.size(); 
-    string inputStrSizeBinary = intToBinary(inputStrSize);
+    string inputStrSizeBinary = intToFixedBinary(inputStrSize, 16);
 
-    header += QRCodeSignature + inputStrSizeBinary; // + checksum (later)
-    int headerSize = header.size();
-    string headerSizeBinary = intToBinary(headerSize);
+    int checksum = checksumMaker();
+    string checksumBinary = intToFixedBinary(checksum, 16);
 
-    if (headerSizeBinary.size() < 16) { // 16 bits for header size
-        while (headerSizeBinary.size() < 16) {
-            headerSizeBinary = "0" + headerSizeBinary;
-        }
-    }
-
-    header = headerSizeBinary + header; // add header size to the beginning of the header
+    // 32b sig - 16b input size - 16b checksum;
+    header += stringToBinary(QRCodeSignature) + inputStrSizeBinary + checksumBinary;
 
     // ----------------------------------------------------------------
 
@@ -165,10 +177,68 @@ string QRCodeManager::constructQRCode() {
     return QRCode;
 }
 
-string QRCodeManager::decodeQRCode() {
-    // to be implemented
-    // converts a qr code back to a string
+int QRCodeManager::decodeChecksum() {
+    string first48Chars = "";
+
+    for (int i = 0; i < QRCode.size(); i++) {
+        if (QRCode.substr(i, 2) == "██" || QRCode.substr(i, 2) == "▒▒") {
+            if (QRCode.substr(i, 2) == "██") {
+                first48Chars += "1";
+            } else {
+                first48Chars += "0";
+            }
+            i += 1;
+        }
+    }
+
+    string checksumMessage = QRCode.substr(32, 16);
+    return binaryToInt(checksumMessage);
 }
+
+
+string QRCodeManager::decodeQRCode(string qrCode) {
+    string binaryStr = "";
+    string zeroBlock = "▒▒";
+    string oneBlock = "██";
+
+    for (int i = 0; i < qrCode.size(); i++) {
+        if (qrCode.substr(i, zeroBlock.size()) == zeroBlock) {
+            binaryStr += "0";
+            i += zeroBlock.size() - 1;
+        } else if (qrCode.substr(i, oneBlock.size()) == oneBlock) {
+            binaryStr += "1";
+            i += oneBlock.size() - 1;
+        }
+    }
+
+    string header = binaryStr.substr(0, 64);
+    string signatureBinary = header.substr(0, 32);
+    int inputSize = binaryToInt(header.substr(32, 16));
+    checksum = binaryToInt(header.substr(48, 16));
+
+    string decodedMessage = "";
+    for (int i = 64; i < 64 + (inputSize * 8); i += 8) {
+        string charBinary = binaryStr.substr(i, 8);
+        decodedMessage += binaryToChar(charBinary);
+    }
+
+    return decodedMessage;
+}
+
+int QRCodeManager::checksumMaker() {
+    int checksum = 0;
+
+    for (int i = 0; i < inputStr.size(); i++) {
+        int charValue = inputStr[i];
+        int signatureValue = QRCodeSignature[i % QRCodeSignature.size()];
+
+        checksum += (charValue * (i + 1)) + signatureValue;
+        checksum = checksum % 256;
+    }
+
+    return checksum;
+}
+
 
 void QRCodeManager::downloadQRCode() {
     ofstream qrCodeFile("qr_code.txt");
@@ -212,13 +282,14 @@ void QRCodeManager::run() {
     "[2] View my QR code\n"
     "[3] Download my QR code\n"
     "[4] Decode a QR code\n"
-    "[5] Exit\n"
+    "[5] About the project\n"
+    "[6] Exit\n"
     "Choice: ";
 
     cout << title << menuPrompt;
     cin >> usrInput;
 
-    while (usrInput != "5") {
+    while (usrInput != "6") {
         cout << endl;
         
         if (usrInput == "1") {
@@ -228,6 +299,25 @@ void QRCodeManager::run() {
             setInputStr(inputStr);
             cout << "\nYour QR code is now:\n" << QRCode;
 
+            string checkSumMessage =
+            "\nChecksum explanation:\n"
+            "This QR code uses a position-weighted checksum.\n"
+            "Each character's ASCII value is multiplied by its position, then\n"
+            "mixed with the HAQR signature. This helps detect if the message\n"
+            "changes while being encoded or decoded.";
+
+            decodeQRCode(QRCode);
+
+            cout << "Input checksum: " << checksumMaker() << endl;
+            cout << "QR checksum: " << checksum << endl;
+
+            if (checksumMaker() == checksum) {
+                cout << "The checksums match, so the QR code is valid." << endl;
+            } else {
+                cout << "The checksums do not match, so the QR code may be invalid." << endl;
+            }
+
+            cout << checkSumMessage << endl;
         } else if (usrInput == "2") {
             if (QRCode.empty()) {
                 cout << "You have not generated a QR code yet" << endl;
@@ -244,9 +334,43 @@ void QRCodeManager::run() {
             }
 
         } else if (usrInput == "4") {
-            cout << "you have chosen to decode a QR code" << endl;
+            cout << "Note, you must type \"Done\" after you're" << endl;
+            cout << "finished inputting the QR code. Please" << endl;
+            cout << "provide the QR code to decode:\n" << endl;
 
-        } else {
+            string line;
+            string fullQRCode = "";
+
+            while (true) {
+                getline(cin, line);
+                if (line == "Done") {
+                    break;
+                }
+                fullQRCode += line + "\n";
+            }
+
+            cout << "\nDecoded string: " << decodeQRCode(fullQRCode) << endl;
+
+        } else if (usrInput == "5") {
+            string projectInfo =
+                "Project Info:\n"
+                "This is a simple QR Code Generator that takes in a user's string input\n"
+                "and converts it into binary, which is then turned into a visual QR Code\n"
+                "where a white cell represents a 1 and a shaded cell represents a 0.\n"
+                "\n"
+                "The visual aspect of the QR Code does not only contain the data from the\n"
+                "user's input. It also has a header that contains the project signature,\n"
+                "a binary version of HAQR, which stands for Haroon Awan's QR Code\n"
+                "Generator. The header also contains the size of the user's input string,\n"
+                "the checksum, and the size of the header itself, allowing the QR Code to\n"
+                "remain flexible and be decoded back into plaintext. Having the header\n"
+                "allows the QR Code to always maintain a standard form without losing any\n"
+                "functionality.";
+
+            cout << projectInfo << endl;
+        }
+        
+        else {
             cout << "INVALID INPUT" << endl;
             
         }

@@ -3,3 +3,4 @@ main
 *.out
 .vscode/
 qr_code.txt
+QRCodeManager

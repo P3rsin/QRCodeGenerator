@@ -12,24 +12,29 @@ class QRCodeManager {
         string reverseStr(string strToReverse);
         string charToBinary(char character);
         string stringToBinary(string str);
+        int binaryToInt(string binary);
         char binaryToChar(string binary);
-        string intToBinary(int num);
+        string intToFixedBinary(int num, int bits);
         vector<string> populateBinaryVector();
         string binaryVectorToStr();
         string constructQRCode();
-        string decodeQRCode();
+        string decodeQRCode(string qrCode);
         void downloadQRCode();
+        int checksumMaker();
         vector<string> getBinaryVector();
         string getInputStr();
         void setInputStr(string inputStr);
         string getQRCode();
+        int decodeChecksum();
+        int getChecksum();
         void run();
 
     private:
         string inputStr;
         vector<string> binaryVector;
         string QRCode;
-        const string QRCodeSignature = stringToBinary("HAQR");
+        int checksum;
+        const string QRCodeSignature = "HAQR";
 };
 
 #endif
