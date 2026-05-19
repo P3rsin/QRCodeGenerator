@@ -1,7 +1,8 @@
 #include "QRCodeManager.h"
-#include <iostream>
+
 #include <cmath>
 #include <fstream>
+#include <iostream>
 
 using namespace std;
 
@@ -13,6 +14,7 @@ QRCodeManager::QRCodeManager() {
 
 string QRCodeManager::reverseStr(string strToReverse) {
     string reversedStr = "";
+
     for (int i = strToReverse.size() - 1; i >= 0; i--) {
         reversedStr += strToReverse[i];
     }
@@ -24,6 +26,7 @@ string QRCodeManager::charToBinary(char character) {
     int asciiValue = int(character);
 
     string binary = "";
+
     while (asciiValue != 0) {
         int x = 0;
 
@@ -41,6 +44,7 @@ string QRCodeManager::charToBinary(char character) {
 
 string QRCodeManager::stringToBinary(string str) {
     string binaryStr = "";
+
     for (int i = 0; i < str.size(); i++) {
         binaryStr += charToBinary(str[i]);
     }
@@ -52,7 +56,7 @@ int QRCodeManager::binaryToInt(string binary) {
     int value = 0;
     int binarySize = binary.size();
     string reversedBinary = reverseStr(binary);
-    
+
     for (int i = 0; i < binarySize; i++) {
         if (reversedBinary[i] == '1') {
             value += pow(2, i);
@@ -66,7 +70,7 @@ char QRCodeManager::binaryToChar(string binary) {
     int asciiValue = 0;
     size_t binarySize = binary.size();
     string reversedBinary = reverseStr(binary);
-    
+
     for (size_t i = 0; i < binarySize; i++) {
         if (reversedBinary[i] == '1') {
             asciiValue += static_cast<int>(pow(2, i));
@@ -78,6 +82,7 @@ char QRCodeManager::binaryToChar(string binary) {
 
 string QRCodeManager::intToFixedBinary(int num, int bits) {
     string binary = "";
+
     while (num != 0) {
         int x = 0;
 
@@ -115,12 +120,11 @@ string QRCodeManager::binaryVectorToStr() {
 }
 
 string QRCodeManager::constructQRCode() {
-
     // ---------------------- header for qr code ----------------------
 
     string header = "";
 
-    int inputStrSize = inputStr.size(); 
+    int inputStrSize = inputStr.size();
     string inputStrSizeBinary = intToFixedBinary(inputStrSize, 16);
 
     int checksum = checksumMaker(inputStr);
@@ -138,10 +142,12 @@ string QRCodeManager::constructQRCode() {
     while (pow(gridDimensions, 2) < totalNumBits) {
         gridDimensions++;
     }
+
     gridDimensions += 2;
 
     QRCode = "";
     size_t idx = 0;
+
     for (int i = 0; i < gridDimensions; i++) {
         for (int j = 0; j < gridDimensions; j++) {
             if (i == 0 && j == 0) {
@@ -166,9 +172,11 @@ string QRCodeManager::constructQRCode() {
                 } else {
                     QRCode += "██";
                 }
+
                 idx++;
             }
         }
+
         QRCode += "\n";
     }
 
@@ -196,6 +204,7 @@ string QRCodeManager::decodeQRCode(string qrCode) {
     int checksum = binaryToInt(header.substr(48, 16));
 
     string decodedMessage = "";
+
     for (int i = 64; i < 64 + (inputSize * 8); i += 8) {
         string charBinary = binaryStr.substr(i, 8);
         decodedMessage += binaryToChar(charBinary);
@@ -218,15 +227,18 @@ int QRCodeManager::checksumMaker(string inputStr) {
     return checksum;
 }
 
-
 void QRCodeManager::downloadQRCode() {
     ofstream qrCodeFile("qr_code.txt");
+
     if (qrCodeFile.is_open()) {
         qrCodeFile << QRCode;
         qrCodeFile.close();
+
         cout << "QR code downloaded successfully" << endl;
     } else {
-        cout << "An error occurred while downloading.\nPlease try downloading the QR code again\n" << endl;
+        cout << "An error occurred while downloading.\n"
+             << "Please try downloading the QR code again\n"
+             << endl;
     }
 }
 
@@ -251,39 +263,41 @@ string QRCodeManager::getQRCode() {
 void QRCodeManager::run() {
     string usrInput;
 
-    const string title = 
-    "-----------------------\n"
-    "    QR Code Manager   \n";
+    const string title =
+        "-----------------------\n"
+        "    QR Code Manager   \n";
 
     const string menuPrompt =
-    "-----------------------\n"
-    "[1] Generate a QR code\n"
-    "[2] View my QR code\n"
-    "[3] Download my QR code\n"
-    "[4] Decode a QR code\n"
-    "[5] About the project\n"
-    "[6] Exit\n"
-    "Choice: ";
+        "-----------------------\n"
+        "[1] Generate a QR code\n"
+        "[2] View my QR code\n"
+        "[3] Download my QR code\n"
+        "[4] Decode a QR code\n"
+        "[5] About the project\n"
+        "[6] Exit\n"
+        "Choice: ";
 
     cout << title << menuPrompt;
     cin >> usrInput;
 
     while (usrInput != "6") {
         cout << endl;
-        
+
         if (usrInput == "1") {
             cout << "Please enter a string to convert\nMy Input: ";
+
             cin.ignore();
             getline(cin, inputStr);
             setInputStr(inputStr);
+
             cout << "\nYour QR code is now:\n" << QRCode;
 
             string checkSumMessage =
-            "\nChecksum explanation:\n"
-            "This QR code uses a position-weighted checksum.\n"
-            "Each character's ASCII value is multiplied by its position, then\n"
-            "mixed with the HAQR signature. This helps detect if the message\n"
-            "changes while being encoded or decoded.";
+                "\nChecksum explanation:\n"
+                "This QR code uses a position-weighted checksum.\n"
+                "Each character's ASCII value is multiplied by its position, then\n"
+                "mixed with the HAQR signature. This helps detect if the message\n"
+                "changes while being encoded or decoded.";
 
             cout << "Input checksum: " << checksumMaker(inputStr) << endl;
             cout << "QR checksum: " << checksumMaker(decodeQRCode(QRCode)) << endl;
@@ -302,14 +316,12 @@ void QRCodeManager::run() {
                 cout << "Your current string:\n" << inputStr << endl;
                 cout << "\nYour QR code is:\n" << QRCode;
             }
-
         } else if (usrInput == "3") {
             if (QRCode.empty()) {
                 cout << "You have not generated a QR code yet" << endl;
             } else {
                 downloadQRCode();
             }
-
         } else if (usrInput == "4") {
             cout << "Note, you must type \"Done\" in a NEW LINE" << endl;
             cout << "once you've pasted the QR code you want to" << endl;
@@ -320,14 +332,15 @@ void QRCodeManager::run() {
 
             while (true) {
                 getline(cin, line);
+
                 if (line == "Done") {
                     break;
                 }
+
                 fullQRCode += line + "\n";
             }
 
             cout << "\nDecoded string: " << decodeQRCode(fullQRCode) << endl;
-
         } else if (usrInput == "5") {
             string projectInfo =
                 "Project Info:\n"
@@ -345,11 +358,8 @@ void QRCodeManager::run() {
                 "functionality.";
 
             cout << projectInfo << endl;
-        }
-        
-        else {
+        } else {
             cout << "INVALID INPUT" << endl;
-            
         }
 
         cout << endl << menuPrompt;
