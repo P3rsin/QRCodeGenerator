@@ -123,7 +123,7 @@ string QRCodeManager::constructQRCode() {
     int inputStrSize = inputStr.size(); 
     string inputStrSizeBinary = intToFixedBinary(inputStrSize, 16);
 
-    int checksum = checksumMaker();
+    int checksum = checksumMaker(inputStr);
     string checksumBinary = intToFixedBinary(checksum, 16);
 
     // 32b sig - 16b input size - 16b checksum;
@@ -139,8 +139,6 @@ string QRCodeManager::constructQRCode() {
         gridDimensions++;
     }
     gridDimensions += 2;
-
-    cout << binaryStr << endl;
 
     QRCode = "";
     size_t idx = 0;
@@ -177,25 +175,6 @@ string QRCodeManager::constructQRCode() {
     return QRCode;
 }
 
-int QRCodeManager::decodeChecksum() {
-    string first48Chars = "";
-
-    for (int i = 0; i < QRCode.size(); i++) {
-        if (QRCode.substr(i, 2) == "██" || QRCode.substr(i, 2) == "▒▒") {
-            if (QRCode.substr(i, 2) == "██") {
-                first48Chars += "1";
-            } else {
-                first48Chars += "0";
-            }
-            i += 1;
-        }
-    }
-
-    string checksumMessage = QRCode.substr(32, 16);
-    return binaryToInt(checksumMessage);
-}
-
-
 string QRCodeManager::decodeQRCode(string qrCode) {
     string binaryStr = "";
     string zeroBlock = "▒▒";
@@ -214,7 +193,7 @@ string QRCodeManager::decodeQRCode(string qrCode) {
     string header = binaryStr.substr(0, 64);
     string signatureBinary = header.substr(0, 32);
     int inputSize = binaryToInt(header.substr(32, 16));
-    checksum = binaryToInt(header.substr(48, 16));
+    int checksum = binaryToInt(header.substr(48, 16));
 
     string decodedMessage = "";
     for (int i = 64; i < 64 + (inputSize * 8); i += 8) {
@@ -225,7 +204,7 @@ string QRCodeManager::decodeQRCode(string qrCode) {
     return decodedMessage;
 }
 
-int QRCodeManager::checksumMaker() {
+int QRCodeManager::checksumMaker(string inputStr) {
     int checksum = 0;
 
     for (int i = 0; i < inputStr.size(); i++) {
@@ -306,12 +285,10 @@ void QRCodeManager::run() {
             "mixed with the HAQR signature. This helps detect if the message\n"
             "changes while being encoded or decoded.";
 
-            decodeQRCode(QRCode);
+            cout << "Input checksum: " << checksumMaker(inputStr) << endl;
+            cout << "QR checksum: " << checksumMaker(decodeQRCode(QRCode)) << endl;
 
-            cout << "Input checksum: " << checksumMaker() << endl;
-            cout << "QR checksum: " << checksum << endl;
-
-            if (checksumMaker() == checksum) {
+            if (checksumMaker(decodeQRCode(QRCode)) == checksumMaker(inputStr)) {
                 cout << "The checksums match, so the QR code is valid." << endl;
             } else {
                 cout << "The checksums do not match, so the QR code may be invalid." << endl;
@@ -334,9 +311,9 @@ void QRCodeManager::run() {
             }
 
         } else if (usrInput == "4") {
-            cout << "Note, you must type \"Done\" after you're" << endl;
-            cout << "finished inputting the QR code. Please" << endl;
-            cout << "provide the QR code to decode:\n" << endl;
+            cout << "Note, you must type \"Done\" in a NEW LINE" << endl;
+            cout << "once you've pasted the QR code you want to" << endl;
+            cout << "decode. Please provide the QR code:\n" << endl;
 
             string line;
             string fullQRCode = "";

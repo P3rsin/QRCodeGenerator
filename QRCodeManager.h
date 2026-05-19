@@ -20,12 +20,11 @@ class QRCodeManager {
         string constructQRCode();
         string decodeQRCode(string qrCode);
         void downloadQRCode();
-        int checksumMaker();
+        int checksumMaker(string inputStr);
         vector<string> getBinaryVector();
         string getInputStr();
         void setInputStr(string inputStr);
         string getQRCode();
-        int decodeChecksum();
         int getChecksum();
         void run();
 
@@ -33,7 +32,6 @@ class QRCodeManager {
         string inputStr;
         vector<string> binaryVector;
         string QRCode;
-        int checksum;
         const string QRCodeSignature = "HAQR";
 };
 
